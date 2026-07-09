@@ -1,4 +1,4 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
+--if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
@@ -79,6 +79,17 @@ return {
 
         -- setting a mapping to false will disable it
         -- ["<C-S>"] = false,
+
+        ["<Leader>o"] = { "<cmd>LspClangdSwitchSourceHeader<cr>", desc = "Switch between source/header" },
+
+        ["<leader>m"] = { name = "CMake" },
+        ["<leader>mg"] = { "<cmd>CMakeGenerate<cr>", desc = "CMake: Generate" },
+        ["<leader>mb"] = { "<cmd>CMakeBuild<cr>", desc = "CMake: Build" },
+        ["<leader>mc"] = { "<cmd>CMakeClean<cr>", desc = "CMake: Clean" },
+        ["<leader>mo"] = { "<cmd>CMakeOpenExecutor<cr>", desc = "CMake: Open Executor" },
+        ["<leader>ms"] = { "<cmd>CMakeSelectBuildDir<cr>", desc = "CMake: Select Build Dir" },
+        ["<leader>mk"] = { "<cmd>CMakeSelectKit<cr>", desc = "CMake: Select Kit" },
+        ["<leader>mt"] = { "<cmd>CMakeSelectBuildType<cr>", desc = "CMake: Select Build Type" },
       },
     },
   },

@@ -12,4 +12,10 @@ return {
       },
     },
   },
+  {
+    "Civitasv/cmake-tools.nvim",
+    opts = {
+      cmake_generate_options = { "-G", "Ninja" },
+    },
+  },
 }

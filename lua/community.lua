@@ -7,7 +7,8 @@ return {
   "AstroNvim/astrocommunity",
   { import = "astrocommunity.pack.lua" },
   -- import/override with your plugins folder
-  { import = "astrocommunity.file-explorer.oil", enabled = true },
-  { import = "astrocommunity.colorscheme.tokyoknight", enabled = true },
+  { import = "astrocommunity.file-explorer.oil-nvim", enabled = true },
+  { import = "astrocommunity.colorscheme.tokyonight-nvim", enabled = true },
   { import = "astrocommunity.completion.codeium-nvim" },
+  { import = "astrocommunity.motion.leap-nvim" },
 }
