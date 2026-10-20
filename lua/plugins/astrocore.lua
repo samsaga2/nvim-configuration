@@ -60,8 +60,12 @@ return {
         -- second key is the lefthand side of the map
 
         -- navigate buffer tabs
-        ["]b"] = { function() require("astrocore.buffer").nav(vim.v.count1) end, desc = "Next buffer" },
-        ["[b"] = { function() require("astrocore.buffer").nav(-vim.v.count1) end, desc = "Previous buffer" },
+        ["<A-Right>"] = { function() require("astrocore.buffer").nav(vim.v.count1) end, desc = "Next buffer" },
+        ["<A-Left>"] = { function() require("astrocore.buffer").nav(-vim.v.count1) end, desc = "Previous buffer" },
+
+        -- navigate git hunks
+        ["<A-Down>"] = { function() require("gitsigns.actions").next_hunk() end, desc = "Next git hunk" },
+        ["<A-Up>"] = { function() require("gitsigns.actions").prev_hunk() end, desc = "Previous git hunk" },
 
         -- mappings seen under group name "Buffer"
         ["<Leader>bd"] = {
@@ -83,13 +87,47 @@ return {
         ["<Leader>o"] = { "<cmd>LspClangdSwitchSourceHeader<cr>", desc = "Switch between source/header" },
 
         ["<leader>m"] = { name = "CMake" },
-        ["<leader>mg"] = { "<cmd>CMakeGenerate<cr>", desc = "CMake: Generate" },
-        ["<leader>mb"] = { "<cmd>CMakeBuild<cr>", desc = "CMake: Build" },
+        ["<leader>mg"] = {
+          function()
+            require("cmake-tools").generate({ bang = false, fargs = {} }, function(result)
+              if result:is_ok() then require("cmake_unity_compdb").refresh() end
+            end)
+          end,
+          desc = "CMake: Generate",
+        },
+        ["<leader>mb"] = {
+          function()
+            local uv = vim.uv or vim.loop
+            local start = uv.hrtime()
+            require("cmake-tools").build({ bang = false, fargs = {} }, function(result)
+              if result:is_ok() then require("cmake_unity_compdb").refresh() end
+              local elapsed = (uv.hrtime() - start) / 1e9
+              vim.notify(
+                string.format("CMake build: %.1fs", elapsed),
+                result:is_ok() and vim.log.levels.INFO or vim.log.levels.ERROR
+              )
+            end)
+          end,
+          desc = "CMake: Build",
+        },
         ["<leader>mc"] = { "<cmd>CMakeClean<cr>", desc = "CMake: Clean" },
         ["<leader>mo"] = { "<cmd>CMakeOpenExecutor<cr>", desc = "CMake: Open Executor" },
         ["<leader>ms"] = { "<cmd>CMakeSelectBuildDir<cr>", desc = "CMake: Select Build Dir" },
         ["<leader>mk"] = { "<cmd>CMakeSelectKit<cr>", desc = "CMake: Select Kit" },
         ["<leader>mt"] = { "<cmd>CMakeSelectBuildType<cr>", desc = "CMake: Select Build Type" },
+        ["<leader>mr"] = { "<cmd>CMakeRun<cr>", desc = "CMake: Run" },
+        ["<leader>ma"] = {
+          function()
+            local current = table.concat(require("cmake-tools").get_launch_args(), " ")
+            vim.ui.input({ prompt = "CMake launch args: ", default = current }, function(input)
+              if input then vim.cmd("CMakeLaunchArgs " .. input) end
+            end)
+          end,
+          desc = "CMake: Set Launch Args",
+        },
+        ["<leader>mL"] = { "<cmd>CMakeSelectLaunchTarget<cr>", desc = "CMake: Select Launch Target" },
+        ["<leader>mx"] = { "<cmd>CMakeStopExecutor<cr>", desc = "CMake: Cancel Build/Generate" },
+        ["<leader>mX"] = { "<cmd>CMakeStopRunner<cr>", desc = "CMake: Stop Run/Debug" },
       },
     },
   },

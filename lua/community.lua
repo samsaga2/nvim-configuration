@@ -11,4 +11,6 @@ return {
   { import = "astrocommunity.colorscheme.tokyonight-nvim", enabled = true },
   { import = "astrocommunity.completion.codeium-nvim" },
   { import = "astrocommunity.motion.leap-nvim" },
+  { import = "astrocommunity.motion.mini-surround" },
+  { import = "astrocommunity.motion.mini-ai" },
 }
