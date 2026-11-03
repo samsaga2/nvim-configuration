@@ -67,6 +67,12 @@ return {
         ["<A-Down>"] = { function() require("gitsigns.actions").next_hunk() end, desc = "Next git hunk" },
         ["<A-Up>"] = { function() require("gitsigns.actions").prev_hunk() end, desc = "Previous git hunk" },
 
+        -- same actions on Alt+hjkl: Tabby (xterm.js) rewrites Alt+arrows into Ctrl+arrows on Linux
+        ["<A-l>"] = { function() require("astrocore.buffer").nav(vim.v.count1) end, desc = "Next buffer" },
+        ["<A-h>"] = { function() require("astrocore.buffer").nav(-vim.v.count1) end, desc = "Previous buffer" },
+        ["<A-j>"] = { function() require("gitsigns.actions").next_hunk() end, desc = "Next git hunk" },
+        ["<A-k>"] = { function() require("gitsigns.actions").prev_hunk() end, desc = "Previous git hunk" },
+
         ["<leader>g"] = { name = "Git" },
         ["<leader>gl"] = { function() Snacks.picker.git_log_file() end, desc = "Git log (current file)" },
         ["<leader>gL"] = { function() Snacks.picker.git_log_line() end, desc = "Git log (current line)" },
