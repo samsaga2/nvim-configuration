@@ -20,6 +20,9 @@ return {
           close_on_exit = true, -- close the Run/Debug terminal window as soon as the program exits
         },
       },
+      cmake_dap_configuration = {
+        type = "codelldb", -- cppvsdbg's handshake only works from inside VS Code itself
+      },
     },
   },
 }

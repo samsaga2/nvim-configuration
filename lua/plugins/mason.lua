@@ -17,6 +17,7 @@ return {
 
         -- install debuggers
         "debugpy",
+        "codelldb",
 
         -- install any other package
         "tree-sitter-cli",

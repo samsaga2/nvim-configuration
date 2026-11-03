@@ -67,6 +67,10 @@ return {
         ["<A-Down>"] = { function() require("gitsigns.actions").next_hunk() end, desc = "Next git hunk" },
         ["<A-Up>"] = { function() require("gitsigns.actions").prev_hunk() end, desc = "Previous git hunk" },
 
+        ["<leader>g"] = { name = "Git" },
+        ["<leader>gl"] = { function() Snacks.picker.git_log_file() end, desc = "Git log (current file)" },
+        ["<leader>gL"] = { function() Snacks.picker.git_log_line() end, desc = "Git log (current line)" },
+
         -- mappings seen under group name "Buffer"
         ["<Leader>bd"] = {
           function()
@@ -113,6 +117,8 @@ return {
         ["<leader>mc"] = { "<cmd>CMakeClean<cr>", desc = "CMake: Clean" },
         ["<leader>mo"] = { "<cmd>CMakeOpenExecutor<cr>", desc = "CMake: Open Executor" },
         ["<leader>ms"] = { "<cmd>CMakeSelectBuildDir<cr>", desc = "CMake: Select Build Dir" },
+        ["<leader>mp"] = { "<cmd>CMakeSelectConfigurePreset<cr>", desc = "CMake: Select Configure Preset" },
+        ["<leader>mP"] = { "<cmd>CMakeSelectBuildPreset<cr>", desc = "CMake: Select Build Preset" },
         ["<leader>mk"] = { "<cmd>CMakeSelectKit<cr>", desc = "CMake: Select Kit" },
         ["<leader>mt"] = { "<cmd>CMakeSelectBuildType<cr>", desc = "CMake: Select Build Type" },
         ["<leader>mr"] = { "<cmd>CMakeRun<cr>", desc = "CMake: Run" },
@@ -128,6 +134,22 @@ return {
         ["<leader>mL"] = { "<cmd>CMakeSelectLaunchTarget<cr>", desc = "CMake: Select Launch Target" },
         ["<leader>mx"] = { "<cmd>CMakeStopExecutor<cr>", desc = "CMake: Cancel Build/Generate" },
         ["<leader>mX"] = { "<cmd>CMakeStopRunner<cr>", desc = "CMake: Stop Run/Debug" },
+        ["<leader>md"] = { "<cmd>CMakeDebug<cr>", desc = "CMake: Debug" },
+
+        ["<leader>d"] = { name = "Debug" },
+        ["<leader>db"] = { function() require("dap").toggle_breakpoint() end, desc = "Toggle breakpoint" },
+        ["<leader>dc"] = { function() require("dap").continue() end, desc = "Continue/Start" },
+        ["<leader>do"] = { function() require("dap").step_over() end, desc = "Step over" },
+        ["<leader>di"] = { function() require("dap").step_into() end, desc = "Step into" },
+        ["<leader>dO"] = { function() require("dap").step_out() end, desc = "Step out" },
+        ["<leader>dt"] = { function() require("dap").terminate() end, desc = "Terminate" },
+        ["<leader>du"] = { function() require("dapui").toggle() end, desc = "Toggle Debug UI" },
+
+        ["<leader>q"] = { name = "Session" },
+        ["<leader>qs"] = { function() require("persistence").load() end, desc = "Load session (cwd)" },
+        ["<leader>qS"] = { function() require("persistence").select() end, desc = "Select session" },
+        ["<leader>ql"] = { function() require("persistence").load({ last = true }) end, desc = "Load last session" },
+        ["<leader>qd"] = { function() require("persistence").stop() end, desc = "Don't save current session" },
       },
     },
   },

@@ -17,15 +17,6 @@ return {
         "vim",
         -- add more arguments for adding more treesitter parsers
       },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = "<C-space>", -- Ctrl + Espacio inicia la selección
-          node_incremental = "<C-space>", -- Ctrl + Espacio la expande
-          scope_incremental = "<bs>", -- Retroceso (Backspace) expande al ámbito superior
-          node_decremental = "<M-space>", -- Alt + Espacio la reduce
-        },
-      },
     },
   },
 }
