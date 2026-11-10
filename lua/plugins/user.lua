@@ -1,14 +1,6 @@
 ---@type LazySpec
 return {
   {
-    "Exafunction/codeium.nvim",
-    opts = {
-      virtual_text = {
-        enabled = true,
-      },
-    },
-  },
-  {
     "Civitasv/cmake-tools.nvim",
     opts = {
       cmake_generate_options = {},
@@ -22,6 +14,9 @@ return {
       },
       cmake_dap_configuration = {
         type = "codelldb", -- cppvsdbg's handshake only works from inside VS Code itself
+        -- the native PDB reader is faster than LLDB's DIA-based one on large
+        -- binaries (ours is huge: HALCON/Qt/Boost/CUDA/libtorch)
+        initCommands = { "settings set plugin.symbol-file.pdb.reader native" },
       },
     },
   },

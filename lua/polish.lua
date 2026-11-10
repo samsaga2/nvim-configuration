@@ -1,22 +1,15 @@
 -- show elapsed build time on every ninja progress line (%e), e.g. [12.3s|45/389]
 vim.env.NINJA_STATUS = "[%es|%f/%t] "
 
--- persistence.nvim never auto-restores on its own; do it when nvim starts
--- with no file args (e.g. plain `nvim` in the project dir)
+-- AstroNvim's resession autosaves a session per directory on exit but never
+-- restores it by itself; do it when nvim starts with no file arguments
 vim.api.nvim_create_autocmd("VimEnter", {
-  desc = "Restore last session if nvim was opened with no file arguments",
+  group = vim.api.nvim_create_augroup("user_restore_dirsession", { clear = true }),
+  desc = "Restore this directory's session if nvim was opened with no file arguments",
   nested = true,
   callback = function()
-    if vim.fn.argc() == 0 then require("persistence").load() end
-  end,
-})
-
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "cpp", "c" },
-  desc = "Disable diagnostics for C/C++ files by default",
-  callback = function(args)
-    vim.defer_fn(function()
-      pcall(vim.diagnostic.enable, false, { bufnr = args.buf })
-    end, 0)
+    if vim.fn.argc() == 0 then
+      require("resession").load(vim.uv.cwd(), { dir = "dirsession", silence_errors = true })
+    end
   end,
 })

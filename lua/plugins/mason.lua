@@ -16,7 +16,6 @@ return {
         "stylua",
 
         -- install debuggers
-        "debugpy",
         "codelldb",
 
         -- install any other package

@@ -23,7 +23,10 @@ return {
           -- "go",
         },
         ignore_filetypes = { -- disable format on save for specified filetypes
-          -- "python",
+          -- clangd bundles its own clang-format (22.x), the project is formatted
+          -- with VS2022's (19.x): saving must not reformat with a different version
+          "c",
+          "cpp",
         },
       },
       disabled = { -- disable formatting capabilities for the listed language servers
@@ -44,7 +47,14 @@ return {
     config = {
       -- ["*"] = { capabilities = {} }, -- modify default LSP client settings such as capabilities
       clangd = {
-        cmd = { "clangd", "-j=8", "--pch-storage=disk" },
+        cmd = {
+          "clangd",
+          "-j=8",
+          "--pch-storage=disk",
+          "--header-insertion=never",
+          "--completion-style=detailed",
+          "--all-scopes-completion",
+        },
       },
     },
     -- customize how language servers are attached
@@ -78,23 +88,6 @@ return {
       },
     },
     -- mappings to be set up on attaching of a language server
-    mappings = {
-      n = {
-        -- a `cond` key can provided as the string of a server capability to be required to attach, or a function with `client` and `bufnr` parameters from the `on_attach` that returns a boolean
-        gD = {
-          function() vim.lsp.buf.declaration() end,
-          desc = "Declaration of current symbol",
-          cond = "textDocument/declaration",
-        },
-        ["<Leader>uY"] = {
-          function() require("astrolsp.toggles").buffer_semantic_tokens() end,
-          desc = "Toggle LSP semantic highlight (buffer)",
-          cond = function(client)
-            return client:supports_method "textDocument/semanticTokens/full" and vim.lsp.semantic_tokens ~= nil
-          end,
-        },
-      },
-    },
     -- A custom `on_attach` function to be run after the default `on_attach` function
     -- takes two parameters `client` and `bufnr`  (`:h lsp-attach`)
     on_attach = function(client, bufnr)

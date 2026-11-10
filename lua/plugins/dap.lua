@@ -36,7 +36,28 @@ return {
     require("nvim-dap-virtual-text").setup()
 
     local dapui = require("dapui")
-    dapui.setup()
+    dapui.setup({
+      layouts = {
+        {
+          elements = {
+            { id = "scopes", size = 0.4 }, -- variables get more room, used the most
+            { id = "breakpoints", size = 0.2 },
+            { id = "stacks", size = 0.2 },
+            { id = "watches", size = 0.2 },
+          },
+          size = 50, -- wider sidebar than the 40-col default
+          position = "left",
+        },
+        {
+          elements = {
+            { id = "repl", size = 0.6 }, -- for evaluating expressions ad hoc
+            { id = "console", size = 0.4 },
+          },
+          size = 12,
+          position = "bottom",
+        },
+      },
+    })
     dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open() end
     dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close() end
     dap.listeners.before.event_exited["dapui_config"] = function() dapui.close() end
