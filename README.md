@@ -1,34 +1,64 @@
-# AstroNvim Template
+# Mi configuración de Neovim y WezTerm
 
-**NOTE:** This is for AstroNvim v6+
+Configuración personal de [AstroNvim](https://github.com/AstroNvim/AstroNvim) v6, más la de
+[WezTerm](https://wezterm.org) en la carpeta `wezterm/`. Sirve tal cual en Windows y en Linux.
 
-A template for getting started with [AstroNvim](https://github.com/AstroNvim/AstroNvim)
+## Instalación
 
-## 🛠️ Installation
+### 1. Neovim
 
-#### Make a backup of your current nvim and shared folder
+Clonar este repositorio en la carpeta de configuración de Neovim y abrir `nvim`; los plugins se
+instalan solos en el primer arranque.
 
-```shell
-mv ~/.config/nvim ~/.config/nvim.bak
-mv ~/.local/share/nvim ~/.local/share/nvim.bak
-mv ~/.local/state/nvim ~/.local/state/nvim.bak
-mv ~/.cache/nvim ~/.cache/nvim.bak
+Windows (PowerShell):
+
+```powershell
+git clone https://github.com/samsaga2/nvim-configuration $env:LOCALAPPDATA\nvim
 ```
 
-#### Create a new user repository from this template
-
-Press the "Use this template" button above to create a new repository to store your user configuration.
-
-You can also just clone this repository directly if you do not want to track your user configuration in GitHub.
-
-#### Clone the repository
+Linux:
 
 ```shell
-git clone https://github.com/<your_user>/<your_repository> ~/.config/nvim
+git clone https://github.com/samsaga2/nvim-configuration ~/.config/nvim
 ```
 
-#### Start Neovim
+### 2. WezTerm
+
+WezTerm busca su configuración en `~/.wezterm.lua`. Ese archivo es solo un cargador de unas líneas
+que apunta a `wezterm/wezterm.lua` de este repositorio; basta con copiarlo una vez.
+
+Windows (PowerShell):
+
+```powershell
+Copy-Item $env:LOCALAPPDATA\nvim\wezterm\loader.lua $HOME\.wezterm.lua
+```
+
+Linux:
 
 ```shell
-nvim
+cp ~/.config/nvim/wezterm/loader.lua ~/.wezterm.lua
 ```
+
+A partir de ahí, cualquier cambio en `wezterm/wezterm.lua` se aplica al guardar.
+
+## Cosas que dependen de la máquina
+
+- **Versión de Visual Studio para compilar desde Neovim** (solo Windows): `lua/msvc_env.lua`, variable
+  `vs_version_range`. En Linux ese módulo no hace nada.
+- **Rutas de Visual Studio y del proyecto en WezTerm** (solo Windows): al principio del bloque
+  `if is_windows` de `wezterm/wezterm.lua` (`VS2022`, `VS18`, `PROJECT_DIR`).
+- **Herramientas externas**: `git`, `ripgrep`, `fd` y `lazygit` en el `PATH`. Los servidores de
+  lenguaje y el depurador los instala Mason.
+
+## Atajos propios más usados
+
+| Atajo | Qué hace |
+| --- | --- |
+| `<Leader>m…` | CMake: `mg` generar, `mb` compilar, `mr` ejecutar, `md` depurar, `ma` argumentos, `mp` preset |
+| `<Leader>d…`, `F5` `F9` `F10` `F11` | Depurador; `<Leader>dv` muestra una imagen, región o tupla |
+| `<Leader>l…` | LSP; `lt` jerarquía de tipos, `lT` AST, `lk` info del símbolo |
+| `<Leader>gl` / `<Leader>gL` | Historial de git del archivo / de la línea |
+| `<Leader>v`, luego `v` / `V` | Expandir / contraer la selección por sintaxis |
+| `s` / `S` | Saltar a cualquier sitio con dos caracteres (leap) |
+| `ys` `ds` `cs`, `S` en visual | Añadir, quitar y cambiar lo que rodea a un texto |
+| `Ctrl+Shift+D` (WezTerm) | Pestaña con nvim y `claude` en el proyecto |
