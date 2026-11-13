@@ -1,6 +1,8 @@
 -- show elapsed build time on every ninja progress line (%e), e.g. [12.3s|45/389]
 vim.env.NINJA_STATUS = "[%es|%f/%t] "
 
+require("msvc_env").load()
+
 -- AstroNvim's resession autosaves a session per directory on exit but never
 -- restores it by itself; do it when nvim starts with no file arguments
 vim.api.nvim_create_autocmd("VimEnter", {

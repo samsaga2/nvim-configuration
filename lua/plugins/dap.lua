@@ -1,7 +1,7 @@
 ---@type LazySpec
 return {
   "mfussenegger/nvim-dap",
-  dependencies = { "rcarriga/nvim-dap-ui", "nvim-neotest/nvim-nio", "theHamsta/nvim-dap-virtual-text" },
+  dependencies = { "rcarriga/nvim-dap-ui", "nvim-neotest/nvim-nio" },
   config = function()
     local dap = require("dap")
 
@@ -32,8 +32,6 @@ return {
       assert(handle, "Error running codelldb: " .. tostring(pid_or_err))
       on_adapter({ type = "server", host = "127.0.0.1", port = codelldb_port })
     end
-
-    require("nvim-dap-virtual-text").setup()
 
     local dapui = require("dapui")
     dapui.setup({
