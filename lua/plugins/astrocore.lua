@@ -114,6 +114,7 @@ return {
           end,
           desc = "CMake: Build",
         },
+        ["<Leader>mB"] = { "<cmd>CMakeSelectBuildTarget<cr>", desc = "CMake: Select Build Target" },
         ["<Leader>mc"] = { "<cmd>CMakeClean<cr>", desc = "CMake: Clean" },
         ["<Leader>mo"] = { "<cmd>CMakeOpenExecutor<cr>", desc = "CMake: Open Executor" },
         ["<Leader>ms"] = { "<cmd>CMakeSelectBuildDir<cr>", desc = "CMake: Select Build Dir" },
@@ -121,6 +122,37 @@ return {
         ["<Leader>mP"] = { "<cmd>CMakeSelectBuildPreset<cr>", desc = "CMake: Select Build Preset" },
         ["<Leader>mk"] = { "<cmd>CMakeSelectKit<cr>", desc = "CMake: Select Kit" },
         ["<Leader>mt"] = { "<cmd>CMakeSelectBuildType<cr>", desc = "CMake: Select Build Type" },
+        -- :CMakeRunTest always asks which test to run, and its runner window closes on exit
+        -- (close_on_exit in user.lua); the executor keeps the output open when a test fails
+        ["<Leader>mT"] = {
+          function()
+            local config = require("cmake-tools").get_config()
+            local utils = require "cmake-tools.utils"
+            if utils.has_active_job(config.runner, config.executor) then return end -- it notifies itself
+            if not config:has_build_directory() then
+              vim.notify("CMake: no build directory, generate the project first", vim.log.levels.WARN)
+              return
+            end
+            local uv = vim.uv or vim.loop
+            local start = uv.hrtime()
+            utils.execute(
+              "ctest",
+              config.env_script,
+              require("cmake-tools.environment").get_build_environment(config),
+              { "--test-dir", config:build_directory_path(), "--output-on-failure" },
+              config.cwd,
+              config.executor,
+              function(result)
+                local elapsed = (uv.hrtime() - start) / 1e9
+                vim.notify(
+                  string.format("CMake tests %s: %.1fs", result:is_ok() and "passed" or "FAILED", elapsed),
+                  result:is_ok() and vim.log.levels.INFO or vim.log.levels.ERROR
+                )
+              end
+            )
+          end,
+          desc = "CMake: Run all tests",
+        },
         ["<Leader>mr"] = { "<cmd>CMakeRun<cr>", desc = "CMake: Run" },
         ["<Leader>ma"] = {
           function()

@@ -54,6 +54,7 @@ A partir de ahí, cualquier cambio en `wezterm/wezterm.lua` se aplica al guardar
 
 | Atajo | Qué hace |
 | --- | --- |
+| `<Leader>m…` | CMake: `mg` generar, `mb` compilar, `mB` elegir qué target compila, `mT` todos los tests, `mr` ejecutar, `md` depurar, `ma` argumentos, `mp` preset |
 | `<Leader>d…`, `F5` `F9` `F10` `F11` | Depurador; `<Leader>dv` muestra una imagen, región o tupla |
 | `<Leader>l…` | LSP; `lt` jerarquía de tipos, `lT` AST, `lk` info del símbolo |
 | `<Leader>uh` / `<Leader>uv` | Mostrar u ocultar los type hints / los avisos del linter en línea (ocultos al arrancar) |
