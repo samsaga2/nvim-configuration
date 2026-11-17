@@ -57,6 +57,7 @@ A partir de ahí, cualquier cambio en `wezterm/wezterm.lua` se aplica al guardar
 | `<Leader>d…`, `F5` `F9` `F10` `F11` | Depurador; `<Leader>dv` muestra una imagen, región o tupla |
 | `<Leader>l…` | LSP; `lt` jerarquía de tipos, `lT` AST, `lk` info del símbolo |
 | `<Leader>uh` / `<Leader>uv` | Mostrar u ocultar los type hints / los avisos del linter en línea (ocultos al arrancar) |
+| `Alt+g` | Abrir u ocultar lazygit sin cerrarlo (un push en marcha no se corta) |
 | `<Leader>gl` / `<Leader>gL` | Historial de git del archivo / de la línea |
 | `<Leader>v`, luego `v` / `V` | Expandir / contraer la selección por sintaxis |
 | `s` / `S` | Saltar a cualquier sitio con dos caracteres (leap) |

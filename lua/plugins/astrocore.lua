@@ -3,6 +3,10 @@
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
 
+-- Same command string as AstroNvim's <Leader>gg, so both keys share one lazygit terminal.
+-- Hiding it instead of quitting keeps a running push alive.
+local function toggle_lazygit() require("astrocore").toggle_term_cmd { cmd = "lazygit ", direction = "float" } end
+
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
@@ -42,8 +46,13 @@ return {
     -- NOTE: keycodes follow the casing in the vimdocs. For example, `<Leader>` must be capitalized
     mappings = {
       -- first key is the mode
+      t = {
+        ["<A-g>"] = { toggle_lazygit, desc = "Toggle lazygit" },
+      },
       n = {
         -- second key is the lefthand side of the map
+
+        ["<A-g>"] = { toggle_lazygit, desc = "Toggle lazygit" },
 
         -- navigate buffer tabs
         ["<A-Right>"] = { function() require("astrocore.buffer").nav(vim.v.count1) end, desc = "Next buffer" },
