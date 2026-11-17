@@ -13,4 +13,5 @@ return {
   { import = "astrocommunity.motion.leap-nvim" },
   { import = "astrocommunity.motion.mini-surround" },
   { import = "astrocommunity.motion.mini-ai" },
+  { import = "astrocommunity.test.neotest" },
 }
