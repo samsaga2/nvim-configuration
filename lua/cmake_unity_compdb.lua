@@ -38,8 +38,31 @@ function M.refresh()
     end
   end
 
-  vim.fn.writefile({ vim.fn.json_encode(expanded) }, vim.fn.getcwd() .. "/compile_commands.json")
+  -- nothing to do when the root file already is this expansion (keeps repeated calls quiet)
+  local target = vim.fn.getcwd() .. "/compile_commands.json"
+  local content = vim.fn.json_encode(expanded)
+  local ok_current, current = pcall(vim.fn.readfile, target)
+  if ok_current and table.concat(current, "\n") == content then return end
+
+  vim.fn.writefile({ content }, target)
   vim.notify(string.format("compile_commands.json: %d entradas (unity expandido)", #expanded), vim.log.levels.INFO)
+end
+
+-- The project's own build copies the unexpanded compile_commands.json over the root one on
+-- every build (also the builds behind Run/Debug, and failed ones). Expanding only after a
+-- successful <Leader>mb left clangd guessing flags most of the time, e.g. showing code
+-- under a per-target define as disabled. Watch the root file and re-expand it whenever
+-- something else rewrites it.
+local poll
+function M.watch()
+  if poll or vim.fn.filereadable(vim.fn.getcwd() .. "/CMakeLists.txt") == 0 then return end
+  poll = vim.uv.new_fs_poll()
+  if not poll then return end
+  poll:start(vim.fn.getcwd() .. "/compile_commands.json", 2000, function(err)
+    if not err then vim.schedule(M.refresh) end
+  end)
+  -- the file may already be stale from a build made before nvim started
+  vim.defer_fn(M.refresh, 3000)
 end
 
 return M

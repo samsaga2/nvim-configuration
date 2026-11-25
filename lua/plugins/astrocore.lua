@@ -7,6 +7,39 @@
 -- Hiding it instead of quitting keeps a running push alive.
 local function toggle_lazygit() require("astrocore").toggle_term_cmd { cmd = "lazygit ", direction = "float" } end
 
+local function timed_build(build_opts, label)
+  local start = vim.uv.hrtime()
+  require("cmake-tools").build(build_opts, function(result)
+    vim.notify(
+      string.format("%s: %.1fs", label, (vim.uv.hrtime() - start) / 1e9),
+      result:is_ok() and vim.log.levels.INFO or vim.log.levels.ERROR
+    )
+  end)
+end
+
+-- Builds only the library/executable the current file belongs to. :CMakeBuildCurrentFile
+-- does the same but compares paths as plain strings, and on Windows the code model mixes
+-- "\" and "/", so it never finds the owner.
+local function build_current_file_target()
+  local file = vim.fs.normalize(vim.api.nvim_buf_get_name(0)):lower()
+  local all = require("cmake-tools").get_config():build_targets_with_sources()
+  local names = {}
+  for _, source in ipairs(all.data and all.data.sources or {}) do
+    if vim.fs.normalize(source.path):lower() == file and not vim.list_contains(names, source.name) then
+      table.insert(names, source.name)
+    end
+  end
+  if #names == 0 then
+    vim.notify("CMake: this file does not belong to any target of the current preset", vim.log.levels.WARN)
+  elseif #names == 1 then
+    timed_build({ target = names[1], fargs = {} }, "CMake build " .. names[1])
+  else
+    vim.ui.select(names, { prompt = "Target to build" }, function(name)
+      if name then timed_build({ target = name, fargs = {} }, "CMake build " .. name) end
+    end)
+  end
+end
+
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
@@ -90,39 +123,39 @@ return {
 
         ["<Leader>o"] = { "<cmd>LspClangdSwitchSourceHeader<cr>", desc = "Switch between source/header" },
 
+        -- :restart refuses to run with unsaved buffers; the session is saved on exit and
+        -- restored on start (polish.lua), so the open files come back
+        ["<Leader>pr"] = { "<cmd>wall<cr><cmd>restart<cr>", desc = "Restart Neovim (reload config)" },
+
         ["<Leader>m"] = { desc = "CMake" },
         ["<Leader>mg"] = {
           function()
+            -- generating does not rewrite the root compile_commands.json, so the watcher
+            -- in cmake_unity_compdb would not notice the new entries
             require("cmake-tools").generate({ bang = false, fargs = {} }, function(result)
               if result:is_ok() then require("cmake_unity_compdb").refresh() end
             end)
           end,
-          desc = "CMake: Generate",
+          desc = "Generate",
         },
         ["<Leader>mb"] = {
-          function()
-            local uv = vim.uv or vim.loop
-            local start = uv.hrtime()
-            require("cmake-tools").build({ bang = false, fargs = {} }, function(result)
-              if result:is_ok() then require("cmake_unity_compdb").refresh() end
-              local elapsed = (uv.hrtime() - start) / 1e9
-              vim.notify(
-                string.format("CMake build: %.1fs", elapsed),
-                result:is_ok() and vim.log.levels.INFO or vim.log.levels.ERROR
-              )
-            end)
-          end,
-          desc = "CMake: Build",
+          function() timed_build({ bang = false, fargs = {} }, "CMake build") end,
+          desc = "Build",
         },
-        ["<Leader>mB"] = { "<cmd>CMakeSelectBuildTarget<cr>", desc = "CMake: Select Build Target" },
-        ["<Leader>mc"] = { "<cmd>CMakeClean<cr>", desc = "CMake: Clean" },
-        ["<Leader>mo"] = { "<cmd>CMakeOpenExecutor<cr>", desc = "CMake: Open Executor" },
-        ["<Leader>ms"] = { "<cmd>CMakeSelectBuildDir<cr>", desc = "CMake: Select Build Dir" },
-        ["<Leader>mp"] = { "<cmd>CMakeSelectConfigurePreset<cr>", desc = "CMake: Select Configure Preset" },
-        ["<Leader>mP"] = { "<cmd>CMakeSelectBuildPreset<cr>", desc = "CMake: Select Build Preset" },
-        ["<Leader>mk"] = { "<cmd>CMakeSelectKit<cr>", desc = "CMake: Select Kit" },
-        ["<Leader>mt"] = { "<cmd>CMakeSelectBuildType<cr>", desc = "CMake: Select Build Type" },
-        ["<Leader>mr"] = { "<cmd>CMakeRun<cr>", desc = "CMake: Run" },
+        ["<Leader>mf"] = { build_current_file_target, desc = "Build the current file's target" },
+        ["<Leader>mc"] = { "<cmd>CMakeClean<cr>", desc = "Clean" },
+        ["<Leader>mo"] = { "<cmd>CMakeOpenExecutor<cr>", desc = "Open build panel" },
+        -- kit, build type, build dir and build preset have no mapping on purpose: the
+        -- project is driven by CMakePresets.json (their :CMakeSelect* commands remain)
+        ["<Leader>ms"] = { desc = "Select" },
+        ["<Leader>msp"] = { "<cmd>CMakeSelectConfigurePreset<cr>", desc = "Configure preset" },
+        ["<Leader>msb"] = { "<cmd>CMakeSelectBuildTarget<cr>", desc = "Target to build" },
+        ["<Leader>msr"] = { "<cmd>CMakeSelectLaunchTarget<cr>", desc = "Executable to run/debug" },
+        ["<Leader>mr"] = { "<cmd>CMakeRun<cr>", desc = "Run" },
+        ["<Leader>mR"] = {
+          function() require("cmake_run_extra").run_in_new_terminal() end,
+          desc = "Run in a new terminal (alongside others)",
+        },
         ["<Leader>ma"] = {
           function()
             local current = table.concat(require("cmake-tools").get_launch_args(), " ")
@@ -130,12 +163,30 @@ return {
               if input then vim.cmd("CMakeLaunchArgs " .. input) end
             end)
           end,
-          desc = "CMake: Set Launch Args",
+          desc = "Launch arguments",
         },
-        ["<Leader>mL"] = { "<cmd>CMakeSelectLaunchTarget<cr>", desc = "CMake: Select Launch Target" },
-        ["<Leader>mx"] = { "<cmd>CMakeStopExecutor<cr>", desc = "CMake: Cancel Build/Generate" },
-        ["<Leader>mX"] = { "<cmd>CMakeStopRunner<cr>", desc = "CMake: Stop Run/Debug" },
-        ["<Leader>md"] = { "<cmd>CMakeDebug<cr>", desc = "CMake: Debug" },
+        ["<Leader>mx"] = {
+          function()
+            -- a build/generate in progress wins; otherwise stop the program started by Run
+            local build_job = require("cmake-tools.quickfix").job
+            vim.cmd(build_job and not build_job.is_shutdown and "CMakeStopExecutor" or "CMakeStopRunner")
+          end,
+          desc = "Stop (build, else the running program)",
+        },
+        ["<Leader>md"] = {
+          function()
+            vim.g.dap_break_on_exceptions = false
+            vim.cmd "CMakeDebug"
+          end,
+          desc = "Debug",
+        },
+        ["<Leader>mD"] = {
+          function()
+            vim.g.dap_break_on_exceptions = true
+            vim.cmd "CMakeDebug"
+          end,
+          desc = "Debug, break on exceptions",
+        },
 
         -- the rest of <Leader>d* (and F5/F9/F10/F11) comes from AstroNvim's own dap mappings
         ["<Leader>dt"] = { function() require("dap").terminate() end, desc = "Terminate" },
