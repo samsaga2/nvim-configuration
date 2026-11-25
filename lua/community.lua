@@ -7,6 +7,11 @@ return {
   "AstroNvim/astrocommunity",
   { import = "astrocommunity.pack.lua" },
   { import = "astrocommunity.pack.cmake" },
+  { import = "astrocommunity.pack.json" },
+  { import = "astrocommunity.pack.yaml" },
+  -- only the language server: the full python pack adds black/isort, which would rewrite
+  -- the project's shared scripts on save, and a test adapter that scans the whole repo
+  { import = "astrocommunity.pack.python.basedpyright" },
   -- import/override with your plugins folder
   { import = "astrocommunity.file-explorer.oil-nvim", enabled = true },
   { import = "astrocommunity.colorscheme.tokyonight-nvim", enabled = true },

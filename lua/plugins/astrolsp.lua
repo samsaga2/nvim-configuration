@@ -27,6 +27,11 @@ return {
           -- with VS2022's (19.x): saving must not reformat with a different version
           "c",
           "cpp",
+          -- shared project files with no formatter config: format by hand with <Leader>lf
+          "python",
+          "json",
+          "jsonc",
+          "yaml",
         },
       },
       disabled = { -- disable formatting capabilities for the listed language servers
