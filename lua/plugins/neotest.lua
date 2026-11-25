@@ -165,6 +165,9 @@ return {
     local gtest = require("neotest-gtest").setup {
       is_test_file = is_gtest_source,
       filter_dir = only_tests_dir,
+      -- one process per test: a test that crashes the executable no longer turns every
+      -- test after it red ("did not report this case"); slower, the exe starts once per test
+      process_isolation = true,
     }
     -- The adapter runs every executable from the project root; run it from its own folder
     -- instead, like ctest does (the tests read their data relative to it). The debug
