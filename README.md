@@ -57,6 +57,7 @@ A partir de ahí, cualquier cambio en `wezterm/wezterm.lua` se aplica al guardar
 | `<Leader>m…` | CMake: `mg` generar, `mb` compilar, `mf` compilar solo el módulo del archivo actual, `mc` limpiar, `mr` ejecutar, `mR` ejecutar en otro terminal sin cerrar lo anterior, `md` depurar, `mD` depurar parando en excepciones, `ma` argumentos, `mx` parar, `mo` panel de compilación |
 | `<Leader>ms…` | Elegir en CMake: `msp` preset, `msb` qué target compila, `msr` qué ejecutable se lanza |
 | `<Leader>pr` | Guardar todo y reiniciar Neovim para recargar la configuración |
+| (automático) | Una sesión y unos breakpoints por rama de git: al cambiar de rama se restauran los archivos abiertos de la rama nueva |
 | `<Leader>T…` | Tests con neotest: `T<CR>` árbol de tests, `Tt` el test bajo el cursor, `Tf` el archivo, `Tc` asignar ejecutables desde CMake (una vez por build) |
 | `<Leader>d…`, `F5` `F9` `F10` `F11` | Depurador; `<Leader>dh` valor bajo el cursor; `<Leader>dx` parar o no en excepciones de C++; `<Leader>da` engancharse a un proceso abierto, `<Leader>dD` soltarlo |
 | `<Leader>dv` | Ver la variable: `HImage`, `HRegion`, `HObject` y `cv::Mat` como imagen; `HTuple` como texto (una lista larga, en ventana); `HDict` como árbol JSON, con `Enter` en sus imágenes y regiones |

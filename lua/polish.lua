@@ -22,22 +22,29 @@ do
   end)
 end
 
--- AstroNvim's resession autosaves a session per directory on exit but never
--- restores it by itself; do it when nvim starts with no file arguments
+-- One session per git branch (branch_session.lua), restored when nvim starts with no file
+-- arguments and saved on exit. It replaces AstroNvim's per-folder autosave (disabled in
+-- plugins/resession.lua). A headless nvim (scripts, checks) touches no session: it would
+-- restore one into a tiny screen and save it back on exit.
+local session_group = vim.api.nvim_create_augroup("user_branch_session_lifecycle", { clear = true })
 vim.api.nvim_create_autocmd("VimEnter", {
-  group = vim.api.nvim_create_augroup("user_restore_dirsession", { clear = true }),
-  desc = "Restore this directory's session if nvim was opened with no file arguments",
+  group = session_group,
+  desc = "Restore this branch's session if nvim was opened with no file arguments",
   nested = true,
   callback = function()
-    -- a headless nvim (scripts, checks) must not touch the session of the real one:
-    -- it would restore it into a tiny screen and save it back on exit
-    if #vim.api.nvim_list_uis() == 0 then
-      pcall(vim.api.nvim_del_augroup_by_name, "resession_auto_save")
-      return
-    end
-    if vim.fn.argc() == 0 then
-      require("resession").load(vim.uv.cwd(), { dir = "dirsession", silence_errors = true })
-    end
+    if #vim.api.nvim_list_uis() == 0 then return end
+    local branch_session = require "branch_session"
+    branch_session.setup()
+    if vim.fn.argc() == 0 then branch_session.load() end
+  end,
+})
+vim.api.nvim_create_autocmd("VimLeavePre", {
+  group = session_group,
+  desc = "Save this branch's session, and the last one (<Leader>Sl)",
+  callback = function()
+    if #vim.api.nvim_list_uis() == 0 or not require("astrocore.buffer").is_valid_session() then return end
+    require("branch_session").save()
+    require("resession").save("Last Session", { notify = false })
   end,
 })
 
