@@ -191,68 +191,10 @@ return {
         -- the rest of <Leader>d* (and F5/F9/F10/F11) comes from AstroNvim's own dap mappings
         ["<Leader>dt"] = { function() require("dap").terminate() end, desc = "Terminate" },
         ["<Leader>dv"] = {
-          function()
-            local dap = require("dap")
-            local session = dap.session()
-            if not session then
-              vim.notify("No hay sesión de depuración activa", vim.log.levels.WARN)
-              return
-            end
-            local word = vim.fn.expand("<cexpr>")
-            vim.ui.input({ prompt = "Variable a inspeccionar: ", default = word }, function(expr)
-              if not expr or expr == "" then return end
-              session:evaluate(expr, function(err, result)
-                vim.schedule(function()
-                  if err then
-                    vim.notify("No se pudo evaluar: " .. tostring(err.message or err), vim.log.levels.ERROR)
-                    return
-                  end
-                  local ty = result.type or ""
-                  local path = (vim.fn.stdpath("cache") .. "/dap_image_preview.png"):gsub("\\", "/")
-                  local write_expr
-
-                  if ty:find("HTuple", 1, true) then
-                    session:evaluate(string.format("(const char*)((%s).ToString())", expr), function(err2, result2)
-                      vim.schedule(function()
-                        if err2 then
-                          vim.notify("No se pudo leer el HTuple: " .. tostring(err2.message or err2), vim.log.levels.ERROR)
-                        else
-                          vim.notify(result2.result, vim.log.levels.INFO, { title = "HTuple: " .. expr })
-                        end
-                      end)
-                    end)
-                    return
-                  elseif ty:find("HRegion", 1, true) then
-                    -- no sabemos el tamaño real de la región: 4096x4096 como lienzo razonable
-                    write_expr = string.format(
-                      '(void)({ HalconCpp::HImage __dbg_img; HalconCpp::RegionToBin((%s), &__dbg_img, 255, 0, 4096, 4096); __dbg_img.WriteImage("png fastest", 0, "%s"); 0; })',
-                      expr,
-                      path
-                    )
-                  elseif ty:find("HImage", 1, true) then
-                    write_expr = string.format('(void)((%s).WriteImage("png fastest", 0, "%s"))', expr, path)
-                  elseif ty:find("superimage", 1, true) then
-                    write_expr = string.format('(void)cv::imwrite("%s", (%s).to_cvmat())', path, expr)
-                  else
-                    -- asumimos algo compatible con cv::imwrite (cv::Mat u otro InputArray)
-                    write_expr = string.format('(void)cv::imwrite("%s", %s)', path, expr)
-                  end
-
-                  session:evaluate(write_expr, function(err3)
-                    vim.schedule(function()
-                      if err3 then
-                        vim.notify("No se pudo volcar la imagen: " .. tostring(err3.message or err3), vim.log.levels.ERROR)
-                        return
-                      end
-                      vim.fn.jobstart({ "cmd", "/c", "start", "", path }, { detach = true })
-                    end)
-                  end)
-                end)
-              end)
-            end)
-          end,
-          desc = "Debug: view image/region/tuple variable",
-        },      },
+          function() require("dap_image_view").prompt() end,
+          desc = "View image/region/tuple variable",
+        },
+      },
     },
   },
 }
