@@ -167,11 +167,15 @@ return {
         },
         ["<Leader>mx"] = {
           function()
-            -- a build/generate in progress wins; otherwise stop the program started by Run
+            -- a build/generate in progress wins; otherwise stop what runs from the build dir
             local build_job = require("cmake-tools.quickfix").job
-            vim.cmd(build_job and not build_job.is_shutdown and "CMakeStopExecutor" or "CMakeStopRunner")
+            if build_job and not build_job.is_shutdown then
+              vim.cmd "CMakeStopExecutor"
+            else
+              require("cmake_run_extra").stop_programs()
+            end
           end,
-          desc = "Stop (build, else the running program)",
+          desc = "Stop (build, else the running programs)",
         },
         ["<Leader>md"] = {
           function()
