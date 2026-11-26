@@ -46,6 +46,7 @@
   "nvim-ts-autotag": { "branch": "main", "commit": "d7220b55e16ed3c04e88086256def5d282429493" },
   "nvim-window-picker": { "branch": "main", "commit": "6382540b2ae5de6c793d4aa2e3fe6dbb518505ec" },
   "oil.nvim": { "branch": "master", "commit": "d3733d933833a0e59b813ecec99341527adf0c28" },
+  "persistent-breakpoints.nvim": { "branch": "main", "commit": "d1656221836207787b8a7969cc2dc72668c4742a" },
   "plenary.nvim": { "branch": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },
   "resession.nvim": { "branch": "master", "commit": "cc819b0489938d03e4f3532a583354f0287c015b" },
   "schemastore.nvim": { "branch": "main", "commit": "ffbe34a31de0cf696f688e7d9e226dc5b86b4323" },
