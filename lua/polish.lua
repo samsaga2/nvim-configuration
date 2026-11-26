@@ -9,6 +9,19 @@ vim.api.nvim_create_autocmd("VimEnter", {
   callback = function() require("cmake_unity_compdb").watch() end,
 })
 
+-- Loading a session resizes every window to the saved layout scaled to the current screen,
+-- and shrinking the bottom window hands the spare rows to the command line: 'cmdheight'
+-- came back as 3, 21, 40... And since the saved screen height is "lines - cmdheight", each
+-- restart made it worse. Put the height back after every load.
+do
+  local cmdheight_before_load
+  local resession = require "resession"
+  resession.add_hook("pre_load", function() cmdheight_before_load = vim.o.cmdheight end)
+  resession.add_hook("post_load", function()
+    if cmdheight_before_load then vim.o.cmdheight = cmdheight_before_load end
+  end)
+end
+
 -- AstroNvim's resession autosaves a session per directory on exit but never
 -- restores it by itself; do it when nvim starts with no file arguments
 vim.api.nvim_create_autocmd("VimEnter", {
@@ -16,6 +29,12 @@ vim.api.nvim_create_autocmd("VimEnter", {
   desc = "Restore this directory's session if nvim was opened with no file arguments",
   nested = true,
   callback = function()
+    -- a headless nvim (scripts, checks) must not touch the session of the real one:
+    -- it would restore it into a tiny screen and save it back on exit
+    if #vim.api.nvim_list_uis() == 0 then
+      pcall(vim.api.nvim_del_augroup_by_name, "resession_auto_save")
+      return
+    end
     if vim.fn.argc() == 0 then
       require("resession").load(vim.uv.cwd(), { dir = "dirsession", silence_errors = true })
     end
