@@ -103,6 +103,9 @@ return {
 
         ["<Leader>gl"] = { function() Snacks.picker.git_log_file() end, desc = "Git log (current file)" },
         ["<Leader>gL"] = { function() Snacks.picker.git_log_line() end, desc = "Git log (current line)" },
+        -- blame lived on gl/gL in AstroNvim, taken by the logs above
+        ["<Leader>gk"] = { function() require("gitsigns").blame_line { full = true } end, desc = "Git blame (current line)" },
+        ["<Leader>gK"] = { function() require("gitsigns").blame() end, desc = "Git blame (whole file)" },
 
         -- mappings seen under group name "Buffer"
         ["<Leader>bd"] = {
