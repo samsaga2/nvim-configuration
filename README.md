@@ -58,7 +58,7 @@ A partir de ahí, cualquier cambio en `wezterm/wezterm.lua` se aplica al guardar
 | `<Leader>ms…` | Elegir en CMake: `msp` preset, `msb` qué target compila, `msr` qué ejecutable se lanza |
 | `<Leader>pr` | Guardar todo y reiniciar Neovim para recargar la configuración |
 | `<Leader>T…` | Tests con neotest: `T<CR>` árbol de tests, `Tt` el test bajo el cursor, `Tf` el archivo, `Tc` asignar ejecutables desde CMake (una vez por build) |
-| `<Leader>d…`, `F5` `F9` `F10` `F11` | Depurador; `<Leader>dv` muestra una imagen, región o tupla; `<Leader>da` engancharse a un proceso abierto, `<Leader>dD` soltarlo |
+| `<Leader>d…`, `F5` `F9` `F10` `F11` | Depurador; `<Leader>dh` valor bajo el cursor; `<Leader>dx` parar o no en excepciones de C++; `<Leader>da` engancharse a un proceso abierto, `<Leader>dD` soltarlo |
 | `<Leader>l…` | LSP; `lt` jerarquía de tipos, `lT` AST, `lk` info del símbolo |
 | `<Leader>uh` / `<Leader>uv` | Mostrar u ocultar los type hints / los avisos del linter en línea (ocultos al arrancar) |
 | `Alt+g` | Abrir u ocultar lazygit sin cerrarlo (un push en marcha no se corta) |

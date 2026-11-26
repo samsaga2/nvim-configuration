@@ -32,7 +32,6 @@ local function attach_to_process()
       request = "attach",
       name = "Attach to " .. process.name,
       pid = process.pid,
-      initCommands = { "settings set plugin.symbol-file.pdb.reader native" },
     }
   end)
 end
@@ -51,25 +50,38 @@ return {
       --
       -- This build of codelldb never flushes its "Listening on port" announcement when
       -- stdout is piped (verified: it does open the TCP port, just doesn't print it), so
-      -- we can't read the port back. Use a fixed port instead and let nvim-dap's own
+      -- we can't read the port back. We choose the port instead and let nvim-dap's own
       -- connect retries (dap/session.lua, ~14 tries) wait for it to come up.
-      local codelldb_port = "24568"
+      -- A free port per session, asked from the OS: with a fixed one, a codelldb left behind
+      -- by a Neovim that died or restarted kept the port, and every later session failed
+      -- with "codelldb exited with code 101".
+      local function free_port()
+        local probe = assert(vim.uv.new_tcp())
+        probe:bind("127.0.0.1", 0)
+        local port = probe:getsockname().port
+        probe:close()
+        return tostring(port)
+      end
+      local running_adapters = {}
       dap.adapters.codelldb = function(on_adapter)
         local extension = vim.fn.stdpath("data") .. "/mason/packages/codelldb/extension/"
         local handle, pid_or_err
         local is_win = vim.fn.has("win32") == 1
         local adapter = extension .. (is_win and "adapter/codelldb.exe" or "adapter/codelldb")
         local liblldb = extension .. (is_win and "lldb/bin/liblldb.dll" or "lldb/lib/liblldb.so")
+        local codelldb_port = free_port()
         handle, pid_or_err = vim.uv.spawn(adapter, {
           args = { "--port", codelldb_port, "--liblldb", liblldb },
           detached = true,
         }, function(code)
+          running_adapters[handle] = nil
           if handle then handle:close() end
           if code ~= 0 then
             vim.schedule(function() vim.notify("codelldb exited with code " .. code, vim.log.levels.ERROR) end)
           end
         end)
         assert(handle, "Error running codelldb: " .. tostring(pid_or_err))
+        running_adapters[handle] = true
         on_adapter({
           type = "server",
           host = "127.0.0.1",
@@ -80,6 +92,50 @@ return {
         })
       end
 
+      -- codelldb offers the module's Static and Global variables as two cheap scopes, so
+      -- nvim-dap fetched them on every stop and the panel listed them: some 1,700 entries in
+      -- a project test, and LLDB walking the whole PDB for them the first time (12-14 s).
+      -- Marked expensive, they are no longer fetched (the panel then leaves them out).
+      dap.listeners.before.scopes["user_cheap_scopes"] = function(session, _, response)
+        if session.config.type ~= "codelldb" or not response then return end
+        for _, scope in ipairs(response.scopes or {}) do
+          if scope.name == "Static" or scope.name == "Global" then scope.expensive = true end
+        end
+      end
+
+      -- The adapters are detached processes: do not leave them behind when Neovim goes.
+      -- nvim-dap has already asked each session to end by now (ExitPre: detach from
+      -- attached processes, terminate launched ones), so give them a moment to exit on
+      -- their own before killing what is left.
+      vim.api.nvim_create_autocmd("VimLeavePre", {
+        group = vim.api.nvim_create_augroup("user_codelldb_cleanup", { clear = true }),
+        callback = function()
+          vim.wait(1500, function() return next(running_adapters) == nil end, 50)
+          for handle in pairs(running_adapters) do
+            pcall(handle.kill, handle, "sigkill")
+          end
+        end,
+      })
+
+      -- Settings every codelldb session gets, however it is started (CMake, attach, tests):
+      -- * LLDB's native PDB reader: the default, DIA-based one took 115 s instead of 35 s
+      --   to index the application's PDB.
+      -- * On a launch, _NO_DEBUG_HEAP: Windows gives a process started under a debugger the
+      --   slow "debug heap" (2M allocations: 0.55 s instead of 0.33 s); an attached one keeps
+      --   the normal heap, which is why launching ran slower than attaching. Visual Studio
+      --   turns it off the same way.
+      local PDB_READER = "settings set plugin.symbol-file.pdb.reader native"
+      dap.listeners.on_config["user_codelldb_defaults"] = function(config)
+        if config.type ~= "codelldb" then return config end
+        config = vim.deepcopy(config)
+        config.initCommands = config.initCommands or {}
+        if not vim.list_contains(config.initCommands, PDB_READER) then table.insert(config.initCommands, 1, PDB_READER) end
+        if vim.fn.has "win32" == 1 and config.request == "launch" then
+          config.env = vim.tbl_extend("keep", config.env or {}, { _NO_DEBUG_HEAP = "1" })
+        end
+        return config
+      end
+
       -- Break on C++ exceptions, on demand (vim.g.dap_break_on_exceptions, set by <Leader>mD
       -- and toggled by <Leader>dx). codelldb's own "cpp_throw" filter never fires on MSVC
       -- binaries (verified); a breakpoint on the MSVC runtime's throw function does.
@@ -87,8 +143,23 @@ return {
       local function apply_exception_breakpoints(session)
         local enabled = vim.g.dap_break_on_exceptions == true
         if vim.fn.has "win32" == 1 then
-          local breakpoints = enabled and { { name = "_CxxThrowException" } } or {}
-          session:request("setFunctionBreakpoints", { breakpoints = breakpoints }, function() end)
+          -- Every MSVC C++ throw ends in RaiseException(0xE06D7363, ...). Breaking on
+          -- _CxxThrowException missed the modules that link the C++ runtime statically
+          -- and so carry a private copy of it: halconcpp.dll does, so no HALCON exception
+          -- ever stopped. The condition skips the other users of RaiseException
+          -- (OutputDebugString, thread naming).
+          -- An LLDB command instead of a DAP function breakpoint, to restrict it to one
+          -- DLL: by name alone LLDB searches every loaded module, indexing each PDB first.
+          local function lldb(command)
+            session:request("evaluate", { expression = command, context = "repl" }, function() end)
+          end
+          lldb "breakpoint delete nvim_break_on_exceptions"
+          if enabled then
+            lldb(
+              "breakpoint set --name RaiseException --shlib kernelbase.dll"
+                .. " --condition '$rcx == 0xE06D7363' --breakpoint-name nvim_break_on_exceptions"
+            )
+          end
         else
           session:set_exception_breakpoints(enabled and { "cpp_throw" } or {})
         end
@@ -133,7 +204,9 @@ return {
       mappings = {
         n = {
           ["<Leader>du"] = { function() require("dap-view").toggle() end, desc = "Toggle Debugger UI" },
-          ["<Leader>dh"] = { "<Cmd>DapViewHover<CR>", desc = "Debugger Hover" },
+          -- the bang focuses the hover window: q closes it right away and <CR> expands,
+          -- instead of needing a second <Leader>dh (or the mouse) to get into it
+          ["<Leader>dh"] = { "<Cmd>DapViewHover!<CR>", desc = "Debugger Hover" },
           ["<Leader>da"] = { attach_to_process, desc = "Attach to Process" },
           ["<Leader>dD"] = {
             function() require("dap").disconnect { terminateDebuggee = false } end,
@@ -156,7 +229,7 @@ return {
           },
         },
         v = {
-          ["<Leader>dh"] = { ":DapViewHover<CR>", desc = "Debugger Hover (selection)" },
+          ["<Leader>dh"] = { ":DapViewHover!<CR>", desc = "Debugger Hover (selection)" },
           ["<Leader>dE"] = { ":DapViewWatch<CR>", desc = "Watch Selection" },
         },
       },
